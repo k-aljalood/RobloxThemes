@@ -13,6 +13,7 @@ let colorRafId = null;
 const COLOR_MAP = {
   "rgb(255,255,255)": "",
   "rgb(18,18,21)": "",
+  "rgb(228,39,39)": "classic-theme",
 
   "rgb(203,183,253)": "cosmic-dust-theme",
   "rgb(102,37,208)": "cosmic-dust-theme",
@@ -58,7 +59,6 @@ const COLOR_MAP = {
 };
 
 const SET1_CLASSES = [
-  "",
   "cosmic-dust-theme",
   "polar-freeze-theme",
   "super-charge-theme",
@@ -69,7 +69,6 @@ const SET1_CLASSES = [
 ];
 
 const SET2_CLASSES = [
-  "",
   "nebula-drift-theme",
   "nitro-frost-theme",
   "circuit-rush-theme",
@@ -479,7 +478,9 @@ const injectCustomStyles = () => {
   style.id = "roblox-custom-theme-style";
   style.textContent = `
     button[data-testid="app-theme-card"] .icon-regular-roblox-plus,
-    [data-testid="app-theme-upsell"] {
+    div:has(> .icon-regular-roblox-plus),
+    [data-testid="app-theme-upsell"],
+    div:has(> [data-testid="app-theme-upsell"]) {
       display: none !important;
     }
     .roblox-custom-picker-overlay {
@@ -494,15 +495,10 @@ const injectCustomStyles = () => {
       outline: none !important;
       background: transparent !important;
       cursor: pointer !important;
-      appearance: none !important;
-      -webkit-appearance: none !important;
       z-index: 10 !important;
     }
     div[data-testid="custom-theme-grid"] {
       margin-bottom: 40px !important;
-    }
-    .app-theme-section {
-      margin-bottom: 24px !important;
     }
     .settings-container-v2,
     .tab-pane,
@@ -532,8 +528,42 @@ const getLangCode = () => {
   return code;
 };
 
+const getAppThemeSection = () => {
+  const tabGroup = document.querySelector('div[role="group"][aria-label="App theme"], div[role="group"]');
+  if (tabGroup) {
+    const parentSection = tabGroup.closest("section");
+    if (parentSection && parentSection.parentElement && parentSection.parentElement.closest("section")) {
+      return parentSection.parentElement.closest("section");
+    }
+    return parentSection;
+  }
+  const card = document.querySelector('button[data-testid="app-theme-card"]');
+  if (card) {
+    const parentSection = card.closest("section");
+    if (parentSection && parentSection.parentElement && parentSection.parentElement.closest("section")) {
+      return parentSection.parentElement.closest("section");
+    }
+    return parentSection;
+  }
+  return null;
+};
+
+const getExclusiveGrid = () => {
+  const tabGroup = document.querySelector('div[role="group"][aria-label="App theme"], div[role="group"]');
+  if (tabGroup) {
+    const parent = tabGroup.closest("section") || tabGroup.parentElement;
+    if (parent) {
+      return parent.querySelector("div.grid");
+    }
+  }
+  return null;
+};
+
 const updateTitleText = () => {
-  const titleEl = document.querySelector(".app-theme-section .text-title-medium");
+  const section = getAppThemeSection();
+  const titleEl = section
+    ? section.querySelector("h3, .text-title-large")
+    : document.querySelector("h3.text-title-large");
   if (!titleEl) return;
   const fullCode = getLangCode();
   const baseCode = fullCode.split("_")[0];
@@ -544,7 +574,9 @@ const updateTitleText = () => {
 };
 
 const updateDescriptionText = () => {
-  const p = document.querySelector(".app-theme-section p");
+  const section = getAppThemeSection();
+  if (!section) return;
+  const p = section.querySelector("p");
   if (!p) return;
   const fullCode = getLangCode();
   const baseCode = fullCode.split("_")[0];
@@ -590,14 +622,18 @@ if (!document.body) {
 }
 
 const getCardThemeClass = (card) => {
-  const colorSpan = card.querySelector(".radius-circle, span[style*='background-color']");
+  const colorSpan = card.querySelector("span[style*='background-color']") ||
+                    card.querySelector(".radius-circle span") ||
+                    card.querySelector(".radius-circle");
   if (colorSpan) {
-    let bg = "";
-    try {
-      bg = window.getComputedStyle(colorSpan).backgroundColor;
-    } catch (e) {}
+    let bg = colorSpan.style.backgroundColor;
     if (!bg) {
-      bg = colorSpan.style.backgroundColor || colorSpan.getAttribute("style") || "";
+      try {
+        bg = window.getComputedStyle(colorSpan).backgroundColor;
+      } catch (e) {}
+    }
+    if (!bg) {
+      bg = colorSpan.getAttribute("style") || "";
     }
     const match = bg.match(/rgb\(\s*\d+\s*,\s*\d+\s*,\s*\d+\s*\)/i);
     if (match) {
@@ -608,14 +644,35 @@ const getCardThemeClass = (card) => {
     }
   }
 
+  const label = (card.querySelector(".content-default, span:last-child")?.textContent || "").trim().toLowerCase();
+  if (label === "default") return "";
+  if (label === "classic") return "classic-theme";
+  if (label === "cosmic dust") return "cosmic-dust-theme";
+  if (label === "polar freeze") return "polar-freeze-theme";
+  if (label === "super charge") return "super-charge-theme";
+  if (label === "electric lime") return "electric-lime-theme";
+  if (label === "lava glow") return "lava-glow-theme";
+  if (label === "star burst") return "star-burst-theme";
+  if (label === "pixel pop") return "pixel-pop-theme";
+  if (label === "nebula drift") return "nebula-drift-theme";
+  if (label === "nitro frost") return "nitro-frost-theme";
+  if (label === "circuit rush") return "circuit-rush-theme";
+  if (label === "kinetic energy") return "kinetic-energy-theme";
+  if (label === "inferno blast") return "inferno-blast-theme";
+  if (label === "hyper plum") return "hyper-plum-theme";
+  if (label === "quantum pulse") return "quantum-pulse-theme";
+
   const parent = card.parentElement;
   if (parent) {
     const cards = Array.from(parent.querySelectorAll('button[data-testid="app-theme-card"]'));
     const index = cards.indexOf(card);
-    if (index >= 0 && index < 8) {
-      const section = card.closest(".app-theme-section");
-      if (section) {
-        const tabs = section.querySelectorAll('div[role="group"] button');
+    if (index >= 0) {
+      if (cards.length === 2) {
+        return index === 0 ? "" : "classic-theme";
+      }
+      const tabGroup = document.querySelector('div[role="group"][aria-label="App theme"], div[role="group"]');
+      if (tabGroup) {
+        const tabs = tabGroup.querySelectorAll('button:not([data-custom-tab="true"])');
         if (tabs.length >= 2 && tabs[1].getAttribute("aria-pressed") === "true") {
           return SET2_CLASSES[index] || "";
         }
@@ -670,28 +727,45 @@ const updateTabStyles = (group) => {
 
     tab.setAttribute("aria-pressed", isActive ? "true" : "false");
 
-    const activeClass = "bg-inverse-surface-0 content-inverse-emphasis relative clip group/interactable focus-visible:outline-focus disabled:outline-none cursor-pointer relative flex justify-center items-center radius-circle stroke-none padding-left-small padding-right-small height-600 text-label-small";
-    const inactiveClass = "bg-shift-300 content-action-utility relative clip group/interactable focus-visible:outline-focus disabled:outline-none cursor-pointer relative flex justify-center items-center radius-circle stroke-none padding-left-small padding-right-small height-600 text-label-small";
+    const activeClass = "bg-inverse-surface-0 content-inverse-emphasis relative clip group/interactable focus-visible:outline-focus disabled:outline-none cursor-pointer relative flex justify-center items-center radius-circle stroke-none padding-left-medium padding-right-medium height-800 text-label-medium";
+    const inactiveClass = "bg-shift-300 content-action-utility relative clip group/interactable focus-visible:outline-focus disabled:outline-none cursor-pointer relative flex justify-center items-center radius-circle stroke-none padding-left-medium padding-right-medium height-800 text-label-medium";
 
     tab.className = isActive ? activeClass : inactiveClass;
   });
 };
 
 const renderCustomCardsGrid = (container) => {
-  const savedTheme = localStorage.getItem(STORAGE_KEY);
   const savedMap = getCustomGroupColors();
-  const stateKey = `${savedTheme}_${JSON.stringify(savedMap)}`;
+  const stateKey = JSON.stringify(savedMap);
 
   if (container.getAttribute("data-state-key") === stateKey) return;
   container.setAttribute("data-state-key", stateKey);
+
+  const existingCards = container.querySelectorAll('[data-custom-card="true"]');
+  if (existingCards.length === CUSTOM_GROUPS.length) {
+    CUSTOM_GROUPS.forEach((group, index) => {
+      const card = existingCards[index];
+      const currentHex = normalizeHex(savedMap[group.id] || group.getFallback());
+      const input = card.querySelector("input.roblox-custom-picker-overlay");
+      if (input && input.value !== currentHex) {
+        input.value = currentHex;
+      }
+      const span = card.querySelector("span.radius-circle");
+      if (span) {
+        span.style.backgroundColor = currentHex;
+      }
+    });
+    return;
+  }
 
   container.innerHTML = "";
 
   CUSTOM_GROUPS.forEach((group) => {
     const currentHex = normalizeHex(savedMap[group.id] || group.getFallback());
 
-    const btn = document.createElement("button");
-    btn.type = "button";
+    const btn = document.createElement("div");
+    btn.setAttribute("role", "button");
+    btn.setAttribute("tabindex", "0");
     btn.setAttribute("data-testid", "app-theme-card");
     btn.setAttribute("data-custom-card", "true");
     btn.setAttribute("data-group-id", group.id);
@@ -709,10 +783,11 @@ const renderCustomCardsGrid = (container) => {
 };
 
 const setupCustomTabAndGrid = () => {
-  const section = document.querySelector(".app-theme-section");
+  const section = getAppThemeSection();
   if (!section) return;
 
-  const tabGroup = section.querySelector('div[role="group"][aria-label="App theme"], div[role="group"]');
+  const tabGroup = section.querySelector('div[role="group"][aria-label="App theme"], div[role="group"]') ||
+                   document.querySelector('div[role="group"][aria-label="App theme"], div[role="group"]');
   if (tabGroup) {
     let customTab = tabGroup.querySelector('button[data-custom-tab="true"]');
     if (!customTab) {
@@ -721,7 +796,7 @@ const setupCustomTabAndGrid = () => {
       customTab.setAttribute("data-custom-tab", "true");
       customTab.setAttribute("aria-pressed", "false");
       customTab.style.textDecoration = "none";
-      customTab.className = "bg-shift-300 content-action-utility relative clip group/interactable focus-visible:outline-focus disabled:outline-none cursor-pointer relative flex justify-center items-center radius-circle stroke-none padding-left-small padding-right-small height-600 text-label-small";
+      customTab.className = "bg-shift-300 content-action-utility relative clip group/interactable focus-visible:outline-focus disabled:outline-none cursor-pointer relative flex justify-center items-center radius-circle stroke-none padding-left-medium padding-right-medium height-800 text-label-medium";
       customTab.innerHTML = `
         <div aria-hidden="true" data-testid="foundation-web-state-layer" class="absolute inset-[0] transition-colors group-hover/interactable:bg-[var(--color-state-hover)] group-active/interactable:bg-[var(--color-state-press)] group-disabled/interactable:bg-none"></div>
         <span class="padding-y-xsmall text-no-wrap text-truncate-end">Custom</span>
@@ -731,10 +806,10 @@ const setupCustomTabAndGrid = () => {
     updateTabStyles(tabGroup);
   }
 
-  const nativeGrid = section.querySelector("div.grid");
+  const nativeGrid = getExclusiveGrid();
   if (!nativeGrid) return;
 
-  let customGrid = section.querySelector('div[data-testid="custom-theme-grid"]');
+  let customGrid = nativeGrid.parentElement.querySelector('div[data-testid="custom-theme-grid"]');
   if (!customGrid) {
     customGrid = document.createElement("div");
     customGrid.className = "grid gap-medium [grid-template-columns:repeat(2,minmax(0,1fr))]";
@@ -823,7 +898,7 @@ document.addEventListener("click", (e) => {
     return;
   }
 
-  const nativeTab = e.target.closest('.app-theme-section div[role="group"] button:not([data-custom-tab="true"])');
+  const nativeTab = e.target.closest('div[role="group"] button:not([data-custom-tab="true"])');
   if (nativeTab) {
     const group = nativeTab.closest('div[role="group"]');
     if (group) {
@@ -842,7 +917,7 @@ document.addEventListener("click", (e) => {
     return;
   }
 
-  const customCard = e.target.closest('button[data-custom-card="true"]');
+  const customCard = e.target.closest('[data-custom-card="true"]');
   if (customCard) {
     localStorage.setItem(STORAGE_KEY, "custom-user-theme");
     applyTheme();
@@ -871,7 +946,7 @@ document.addEventListener("input", (e) => {
     setCustomGroupColorInMemory(groupId, hex);
     localStorage.setItem(STORAGE_KEY, "custom-user-theme");
 
-    const card = e.target.closest('button[data-custom-card="true"]');
+    const card = e.target.closest('[data-custom-card="true"]');
     if (card) {
       const span = card.querySelector("span.radius-circle");
       if (span) span.style.backgroundColor = hex;
