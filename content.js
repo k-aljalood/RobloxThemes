@@ -6,7 +6,11 @@ const STORAGE_CUSTOM_MAP = "roblox-custom-group-colors";
 const STORAGE_LAST_NATIVE_THEME = "roblox-last-native-theme";
 
 let isUpdating = false;
+let isEarlyUpdating = false;
+let isProgrammaticClick = false;
 let observer = null;
+let earlyObserver = null;
+let earlyBodyObserver = null;
 let cachedCustomColors = null;
 let colorRafId = null;
 
@@ -273,6 +277,10 @@ const TITLE_TEXTS = {
   hi: "थीम",
   th: "ธีม",
   zh: "主题",
+  zh_cn: "主题",
+  zh_tw: "主題",
+  zh_hans: "主题",
+  zh_hant: "主題",
   ja: "テーマ",
   ko: "테마",
   ms: "Tema",
@@ -311,7 +319,7 @@ const TITLE_TEXTS = {
 const DESCRIPTION_TEXTS = {
   en: "Select a custom theme to personalize your Roblox experience.",
   ar: "اختر ثيماً مخصصاً لتخصيص تجربتك في روبلوكس.",
-  id: "Pilih tema kustom untuk mempersonalisasiประสบการณ์ Roblox Anda.",
+  id: "Pilih tema kustom untuk mempersonalisasi pengalaman Roblox Anda.",
   de: "Wähle ein benutzerdefiniertes Design, um dein Roblox-Erlebnis anzupassen.",
   es: "Selecciona un tema personalizado para personalizar tu experiencia en Roblox.",
   fr: "Sélectionnez un thème personnalisé pour personnaliser votre expérience Roblox.",
@@ -323,9 +331,13 @@ const DESCRIPTION_TEXTS = {
   hi: "अपने Roblox अनुभव को वैयक्तिकृत करने के लिए एक कस्टम थीम चुनें।",
   th: "เลือกธีมที่กำหนดเองเพื่อปรับแต่งประสบการณ์ Roblox ของคุณ",
   zh: "选择自定义主题以个性化您的 Roblox 体验。",
+  zh_cn: "选择自定义主题以个性化您的 Roblox 体验。",
+  zh_tw: "選擇自訂主題以個人化您的 Roblox 體驗。",
+  zh_hans: "选择自定义主题以个性化您的 Roblox 体验。",
+  zh_hant: "選擇自訂主題以個人化您的 Roblox 體驗。",
   ja: "カスタムテーマを選択して、Roblox体験をカスタマイズしましょう。",
   ko: "사용자 지정 테마를 선택하여 Roblox 환경을 꾸며보세요.",
-  ms: "Pilih tema tersuai untuk memperribadikanประสบการณ์ Roblox anda.",
+  ms: "Pilih tema tersuai untuk memperibadikan pengalaman Roblox anda.",
   nb: "Velg et tilpasset tema for å tilpasse Roblox-opplevelsen din.",
   no: "Velg et tilpasset tema for å tilpasse Roblox-opplevelsen din.",
   sr: "Изаберите прилагођену тему да бисте персонализовали своје Roblox искуство.",
@@ -345,7 +357,7 @@ const DESCRIPTION_TEXTS = {
   fi: "Valitse mukautettu teema mukauttaaksesi Roblox-kokemustasi.",
   sv: "Välj ett anpassat tema för att anpassa din Roblox-upplevelse.",
   uk: "Виберіть власну тему, щоб налаштувати свій досвід у Roblox.",
-  cs: "Vyberte si vlastní motiv a přizpۆsobte si zážitek z Robloxu.",
+  cs: "Vyberte si vlastní motiv a přizpůsobte si zážitek z Robloxu.",
   el: "Επιλέξτε ένα προσαρμοσμένο θέμα για να προσαρμόσετε την εμπειρία σας στο Roblox.",
   bs: "Odaberite prilagođeno temu da biste personalizirali svoje Roblox iskustvo.",
   bg: "Изберете персонализирана тема, за да персонализирате вашето изживяване в Roblox.",
@@ -373,6 +385,10 @@ const CUSTOM_TAB_TEXTS = {
   hi: "कस्टम",
   th: "กำหนดเอง",
   zh: "自定义",
+  zh_cn: "自定义",
+  zh_tw: "自訂",
+  zh_hans: "自定义",
+  zh_hant: "自訂",
   ja: "カスタム",
   ko: "사용자 지정",
   ms: "Tersuai",
@@ -448,13 +464,6 @@ const populateCustomColorsFromCurrentTheme = () => {
 };
 
 const updateCustomThemeCSS = () => {
-  let styleEl = document.getElementById("roblox-custom-user-theme-variables");
-  if (!styleEl) {
-    styleEl = document.createElement("style");
-    styleEl.id = "roblox-custom-user-theme-variables";
-    (document.head || document.documentElement).appendChild(styleEl);
-  }
-
   const savedMap = getCustomGroupColors();
   const vars = {};
 
@@ -469,7 +478,16 @@ const updateCustomThemeCSS = () => {
   }
   rules += "}\n";
 
-  styleEl.textContent = rules;
+  let styleEl = document.getElementById("roblox-custom-user-theme-variables");
+  if (!styleEl) {
+    styleEl = document.createElement("style");
+    styleEl.id = "roblox-custom-user-theme-variables";
+    (document.head || document.documentElement).appendChild(styleEl);
+  }
+
+  if (styleEl.textContent !== rules) {
+    styleEl.textContent = rules;
+  }
 };
 
 const injectCustomStyles = () => {
@@ -529,17 +547,17 @@ const getLangCode = () => {
 };
 
 const getAppThemeSection = () => {
-  const tabGroup = document.querySelector('div[role="group"][aria-label="App theme"], div[role="group"]');
-  if (tabGroup) {
-    const parentSection = tabGroup.closest("section");
+  const card = document.querySelector('button[data-testid="app-theme-card"]');
+  if (card) {
+    const parentSection = card.closest("section");
     if (parentSection && parentSection.parentElement && parentSection.parentElement.closest("section")) {
       return parentSection.parentElement.closest("section");
     }
     return parentSection;
   }
-  const card = document.querySelector('button[data-testid="app-theme-card"]');
-  if (card) {
-    const parentSection = card.closest("section");
+  const tabGroup = document.querySelector('div[role="group"][aria-label="App theme"]');
+  if (tabGroup) {
+    const parentSection = tabGroup.closest("section");
     if (parentSection && parentSection.parentElement && parentSection.parentElement.closest("section")) {
       return parentSection.parentElement.closest("section");
     }
@@ -549,21 +567,28 @@ const getAppThemeSection = () => {
 };
 
 const getExclusiveGrid = () => {
-  const tabGroup = document.querySelector('div[role="group"][aria-label="App theme"], div[role="group"]');
+  const section = getAppThemeSection();
+  if (!section) return null;
+  const tabGroup = section.querySelector('div[role="group"][aria-label="App theme"], div[role="group"]');
   if (tabGroup) {
     const parent = tabGroup.closest("section") || tabGroup.parentElement;
     if (parent) {
-      return parent.querySelector("div.grid");
+      const grid = parent.querySelector('div.grid:not([data-testid="custom-theme-grid"])');
+      if (grid) return grid;
     }
   }
-  return null;
+  const grids = section.querySelectorAll('div.grid:not([data-testid="custom-theme-grid"])');
+  if (grids.length > 1) {
+    return grids[grids.length - 1];
+  }
+  return grids[0] || null;
 };
 
 const updateTitleText = () => {
   const section = getAppThemeSection();
   const titleEl = section
     ? section.querySelector("h3, .text-title-large")
-    : document.querySelector("h3.text-title-large");
+    : null;
   if (!titleEl) return;
   const fullCode = getLangCode();
   const baseCode = fullCode.split("_")[0];
@@ -598,27 +623,55 @@ const updateCustomTabText = () => {
 };
 
 const applyEarlyTheme = () => {
-  const currentTheme = localStorage.getItem(STORAGE_KEY);
-  if (currentTheme) {
+  if (isEarlyUpdating) return;
+  isEarlyUpdating = true;
+
+  try {
+    const currentTheme = localStorage.getItem(STORAGE_KEY);
     if (currentTheme === "custom-user-theme") {
       updateCustomThemeCSS();
     }
-    if (document.body && !document.body.classList.contains(currentTheme)) {
-      document.body.classList.add(currentTheme);
+    if (!document.body) return;
+
+    const list = document.body.classList;
+    Array.from(list).forEach((cls) => {
+      if (cls.endsWith("-theme") && cls !== "light-theme" && cls !== "dark-theme" && cls !== "age-roblox-theme" && cls !== currentTheme) {
+        list.remove(cls);
+      }
+    });
+
+    if (currentTheme && !list.contains(currentTheme)) {
+      list.add(currentTheme);
     }
+  } finally {
+    isEarlyUpdating = false;
+  }
+};
+
+const onBodyAvailable = () => {
+  applyEarlyTheme();
+  if (!earlyBodyObserver && document.body) {
+    earlyBodyObserver = new MutationObserver(() => {
+      applyEarlyTheme();
+    });
+    earlyBodyObserver.observe(document.body, {
+      attributes: true,
+      attributeFilter: ["class"]
+    });
   }
 };
 
 applyEarlyTheme();
 
 if (!document.body) {
-  const earlyObserver = new MutationObserver(() => {
+  earlyObserver = new MutationObserver(() => {
     if (document.body) {
-      applyEarlyTheme();
-      earlyObserver.disconnect();
+      onBodyAvailable();
     }
   });
   earlyObserver.observe(document.documentElement, { childList: true });
+} else {
+  onBodyAvailable();
 }
 
 const getCardThemeClass = (card) => {
@@ -670,7 +723,8 @@ const getCardThemeClass = (card) => {
       if (cards.length === 2) {
         return index === 0 ? "" : "classic-theme";
       }
-      const tabGroup = document.querySelector('div[role="group"][aria-label="App theme"], div[role="group"]');
+      const section = getAppThemeSection();
+      const tabGroup = section ? section.querySelector('div[role="group"]') : null;
       if (tabGroup) {
         const tabs = tabGroup.querySelectorAll('button:not([data-custom-tab="true"])');
         if (tabs.length >= 2 && tabs[1].getAttribute("aria-pressed") === "true") {
@@ -704,6 +758,20 @@ const applyTheme = () => {
     }
   } else {
     customClasses.forEach((cls) => document.body.classList.remove(cls));
+  }
+};
+
+const resetNativeThemeToDefault = () => {
+  const section = getAppThemeSection();
+  if (!section) return;
+  const cards = section.querySelectorAll('button[data-testid="app-theme-card"]:not([data-custom-card="true"])');
+  for (const c of cards) {
+    if (getCardThemeClass(c) === "") {
+      isProgrammaticClick = true;
+      c.click();
+      isProgrammaticClick = false;
+      break;
+    }
   }
 };
 
@@ -786,8 +854,7 @@ const setupCustomTabAndGrid = () => {
   const section = getAppThemeSection();
   if (!section) return;
 
-  const tabGroup = section.querySelector('div[role="group"][aria-label="App theme"], div[role="group"]') ||
-                   document.querySelector('div[role="group"][aria-label="App theme"], div[role="group"]');
+  const tabGroup = section.querySelector('div[role="group"][aria-label="App theme"], div[role="group"]');
   if (tabGroup) {
     let customTab = tabGroup.querySelector('button[data-custom-tab="true"]');
     if (!customTab) {
@@ -809,11 +876,20 @@ const setupCustomTabAndGrid = () => {
   const nativeGrid = getExclusiveGrid();
   if (!nativeGrid) return;
 
-  let customGrid = nativeGrid.parentElement.querySelector('div[data-testid="custom-theme-grid"]');
+  const allGrids = section.querySelectorAll('div.grid:not([data-testid="custom-theme-grid"])');
+  allGrids.forEach((g) => {
+    if (g !== nativeGrid && g.style.display === "none") {
+      g.style.display = "";
+    }
+  });
+
+  let customGrid = document.querySelector('div[data-testid="custom-theme-grid"]');
   if (!customGrid) {
     customGrid = document.createElement("div");
     customGrid.className = "grid gap-medium [grid-template-columns:repeat(2,minmax(0,1fr))]";
     customGrid.setAttribute("data-testid", "custom-theme-grid");
+  }
+  if (nativeGrid.nextSibling !== customGrid) {
     nativeGrid.parentNode.insertBefore(customGrid, nativeGrid.nextSibling);
   }
 
@@ -891,6 +967,7 @@ window.addEventListener("storage", (e) => {
 document.addEventListener("click", (e) => {
   const customTab = e.target.closest('button[data-custom-tab="true"]');
   if (customTab) {
+    resetNativeThemeToDefault();
     populateCustomColorsFromCurrentTheme();
     localStorage.setItem(ACTIVE_TAB_KEY, "custom");
     localStorage.setItem(STORAGE_KEY, "custom-user-theme");
@@ -898,23 +975,29 @@ document.addEventListener("click", (e) => {
     return;
   }
 
-  const nativeTab = e.target.closest('div[role="group"] button:not([data-custom-tab="true"])');
-  if (nativeTab) {
-    const group = nativeTab.closest('div[role="group"]');
-    if (group) {
+  const group = e.target.closest('div[role="group"]');
+  const isThemeGroup = group && (
+    group.getAttribute("aria-label") === "App theme" ||
+    group.querySelector('button[data-custom-tab="true"]') ||
+    (group.closest("section") && group.closest("section").querySelector('button[data-testid="app-theme-card"]'))
+  );
+
+  if (isThemeGroup) {
+    const nativeTab = e.target.closest('button:not([data-custom-tab="true"])');
+    if (nativeTab && group.contains(nativeTab)) {
       group.querySelectorAll('button:not([data-custom-tab="true"])').forEach((btn) => {
         btn.setAttribute("aria-pressed", btn === nativeTab ? "true" : "false");
       });
+      localStorage.setItem(ACTIVE_TAB_KEY, "native");
+      const lastNative = localStorage.getItem(STORAGE_LAST_NATIVE_THEME) || "";
+      if (lastNative) {
+        localStorage.setItem(STORAGE_KEY, lastNative);
+      } else {
+        localStorage.removeItem(STORAGE_KEY);
+      }
+      init();
+      return;
     }
-    localStorage.setItem(ACTIVE_TAB_KEY, "native");
-    const lastNative = localStorage.getItem(STORAGE_LAST_NATIVE_THEME) || "";
-    if (lastNative) {
-      localStorage.setItem(STORAGE_KEY, lastNative);
-    } else {
-      localStorage.removeItem(STORAGE_KEY);
-    }
-    init();
-    return;
   }
 
   const customCard = e.target.closest('[data-custom-card="true"]');
@@ -924,12 +1007,17 @@ document.addEventListener("click", (e) => {
     return;
   }
 
+  if (isProgrammaticClick) return;
+
   const card = e.target.closest('button[data-testid="app-theme-card"]:not([data-custom-card="true"])');
   if (!card) return;
 
   const themeClass = getCardThemeClass(card);
 
   if (themeClass) {
+    if (themeClass !== "classic-theme") {
+      resetNativeThemeToDefault();
+    }
     localStorage.setItem(STORAGE_KEY, themeClass);
     localStorage.setItem(STORAGE_LAST_NATIVE_THEME, themeClass);
   } else {
@@ -992,6 +1080,14 @@ observer = new MutationObserver((mutations) => {
 });
 
 const startObserver = () => {
+  if (earlyObserver) {
+    earlyObserver.disconnect();
+    earlyObserver = null;
+  }
+  if (earlyBodyObserver) {
+    earlyBodyObserver.disconnect();
+    earlyBodyObserver = null;
+  }
   init();
   observer.observe(document.body || document.documentElement, {
     childList: true,
@@ -1001,8 +1097,8 @@ const startObserver = () => {
   });
 };
 
-if (document.body) {
-  startObserver();
-} else {
+if (document.readyState === "loading") {
   document.addEventListener("DOMContentLoaded", startObserver);
+} else {
+  startObserver();
 }
