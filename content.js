@@ -7,7 +7,6 @@ const STORAGE_LAST_NATIVE_THEME = "roblox-last-native-theme";
 
 let isUpdating = false;
 let isEarlyUpdating = false;
-let isProgrammaticClick = false;
 let observer = null;
 let earlyObserver = null;
 let earlyBodyObserver = null;
@@ -17,70 +16,79 @@ let colorRafId = null;
 const COLOR_MAP = {
   "rgb(255,255,255)": "",
   "rgb(18,18,21)": "",
-  "rgb(228,39,39)": "classic-theme",
+  "rgb(228,39,39)": "theme-classic",
 
-  "rgb(203,183,253)": "cosmic-dust-theme",
-  "rgb(102,37,208)": "cosmic-dust-theme",
+  "rgb(203,183,253)": "theme-cosmic-dust",
+  "rgb(102,37,208)": "theme-cosmic-dust",
 
-  "rgb(108,209,237)": "polar-freeze-theme",
-  "rgb(6,86,132)": "polar-freeze-theme",
+  "rgb(108,209,237)": "theme-polar-freeze",
+  "rgb(6,86,132)": "theme-polar-freeze",
 
-  "rgb(129,216,135)": "super-charge-theme",
-  "rgb(4,93,74)": "super-charge-theme",
+  "rgb(129,216,135)": "theme-super-charge",
+  "rgb(4,93,74)": "theme-super-charge",
 
-  "rgb(180,209,89)": "electric-lime-theme",
-  "rgb(69,89,3)": "electric-lime-theme",
+  "rgb(180,209,89)": "theme-electric-lime",
+  "rgb(69,89,3)": "theme-electric-lime",
 
-  "rgb(251,178,169)": "lava-glow-theme",
-  "rgb(167,24,17)": "lava-glow-theme",
+  "rgb(251,178,169)": "theme-lava-glow",
+  "rgb(167,24,17)": "theme-lava-glow",
 
-  "rgb(251,173,198)": "star-burst-theme",
-  "rgb(165,9,79)": "star-burst-theme",
+  "rgb(251,173,198)": "theme-star-burst",
+  "rgb(165,9,79)": "theme-star-burst",
 
-  "rgb(247,172,244)": "pixel-pop-theme",
-  "rgb(142,31,142)": "pixel-pop-theme",
+  "rgb(247,172,244)": "theme-pixel-pop",
+  "rgb(142,31,142)": "theme-pixel-pop",
 
-  "rgb(221,207,254)": "nebula-drift-theme",
-  "rgb(72,11,152)": "nebula-drift-theme",
+  "rgb(221,207,254)": "theme-nebula-drift",
+  "rgb(72,11,152)": "theme-nebula-drift",
 
-  "rgb(152,227,244)": "nitro-frost-theme",
-  "rgb(4,59,93)": "nitro-frost-theme",
+  "rgb(152,227,244)": "theme-nitro-frost",
+  "rgb(4,59,93)": "theme-nitro-frost",
 
-  "rgb(173,231,177)": "circuit-rush-theme",
-  "rgb(4,62,50)": "circuit-rush-theme",
+  "rgb(173,231,177)": "theme-circuit-rush",
+  "rgb(4,62,50)": "theme-circuit-rush",
 
-  "rgb(202,227,136)": "kinetic-energy-theme",
-  "rgb(46,60,2)": "kinetic-energy-theme",
+  "rgb(202,227,136)": "theme-kinetic-energy",
+  "rgb(46,60,2)": "theme-kinetic-energy",
 
-  "rgb(254,206,200)": "inferno-blast-theme",
-  "rgb(107,15,11)": "inferno-blast-theme",
+  "rgb(254,206,200)": "theme-inferno-blast",
+  "rgb(107,15,11)": "theme-inferno-blast",
 
-  "rgb(251,201,216)": "hyper-plum-theme",
-  "rgb(113,4,55)": "hyper-plum-theme",
+  "rgb(251,201,216)": "theme-hyper-plum",
+  "rgb(113,4,55)": "theme-hyper-plum",
 
-  "rgb(251,200,248)": "quantum-pulse-theme",
-  "rgb(93,14,93)": "quantum-pulse-theme"
+  "rgb(251,200,248)": "theme-quantum-pulse",
+  "rgb(93,14,93)": "theme-quantum-pulse"
 };
 
 const SET1_CLASSES = [
-  "cosmic-dust-theme",
-  "polar-freeze-theme",
-  "super-charge-theme",
-  "electric-lime-theme",
-  "lava-glow-theme",
-  "star-burst-theme",
-  "pixel-pop-theme"
+  "theme-cosmic-dust",
+  "theme-polar-freeze",
+  "theme-super-charge",
+  "theme-electric-lime",
+  "theme-lava-glow",
+  "theme-star-burst",
+  "theme-pixel-pop"
 ];
 
 const SET2_CLASSES = [
-  "nebula-drift-theme",
-  "nitro-frost-theme",
-  "circuit-rush-theme",
-  "kinetic-energy-theme",
-  "inferno-blast-theme",
-  "hyper-plum-theme",
-  "quantum-pulse-theme"
+  "theme-nebula-drift",
+  "theme-nitro-frost",
+  "theme-circuit-rush",
+  "theme-kinetic-energy",
+  "theme-inferno-blast",
+  "theme-hyper-plum",
+  "theme-quantum-pulse"
 ];
+
+const SET3_CLASSES = [
+  "theme-classic"
+];
+
+const isThemeClass = (cls) => {
+  if (cls === "light-theme" || cls === "dark-theme" || cls === "age-roblox-theme") return false;
+  return cls.startsWith("theme-") || cls.endsWith("-theme");
+};
 
 const normalizeHex = (hexStr) => {
   if (!hexStr) return "#000000";
@@ -264,7 +272,7 @@ const CUSTOM_GROUPS = [
 
 const TITLE_TEXTS = {
   en: "Theme",
-  ar: "الثيم",
+  ar: "السمة",
   id: "Tema",
   de: "Design",
   es: "Tema",
@@ -311,20 +319,20 @@ const TITLE_TEXTS = {
   kk: "Тақырып",
   bn: "থিম",
   si: "තේමාව",
-  my: "အကြောင်းအရာ",
+  my: "အပြင်အဆင်",
   ka: "თემა",
-  km: "ប្រធានបទ"
+  km: "ស្បែក"
 };
 
 const DESCRIPTION_TEXTS = {
   en: "Select a custom theme to personalize your Roblox experience.",
-  ar: "اختر ثيماً مخصصاً لتخصيص تجربتك في روبلوكس.",
-  id: "Pilih tema kustom untuk mempersonalisasi pengalaman Roblox Anda.",
+  ar: "حدد سمة مخصصة لتخصيص تجربتك في روبلوكس.",
+  id: "Pilih tema kustom untuk menyesuaikan pengalaman Roblox Anda.",
   de: "Wähle ein benutzerdefiniertes Design, um dein Roblox-Erlebnis anzupassen.",
   es: "Selecciona un tema personalizado para personalizar tu experiencia en Roblox.",
   fr: "Sélectionnez un thème personnalisé pour personnaliser votre expérience Roblox.",
   it: "Seleziona un tema personalizzato per personalizzare la tua esperienza su Roblox.",
-  pl: "Wybierz motyw niestandardowy, aby spersonalizować swoje wrażenia z Roblox.",
+  pl: "Wybierz niestandardowy motyw, aby spersonalizować swoje doświadczenie w Roblox.",
   pt: "Selecione um tema personalizado para personalizar sua experiência no Roblox.",
   vi: "Chọn chủ đề tùy chỉnh để cá nhân hóa trải nghiệm Roblox của bạn.",
   tr: "Roblox deneyiminizi özelleştirmek için özel bir tema seçin.",
@@ -336,15 +344,15 @@ const DESCRIPTION_TEXTS = {
   zh_hans: "选择自定义主题以个性化您的 Roblox 体验。",
   zh_hant: "選擇自訂主題以個人化您的 Roblox 體驗。",
   ja: "カスタムテーマを選択して、Roblox体験をカスタマイズしましょう。",
-  ko: "사용자 지정 테마를 선택하여 Roblox 환경을 꾸며보세요.",
+  ko: "사용자 지정 테마를 선택하여 Roblox 체험을 맞춤화하세요.",
   ms: "Pilih tema tersuai untuk memperibadikan pengalaman Roblox anda.",
   nb: "Velg et tilpasset tema for å tilpasse Roblox-opplevelsen din.",
   no: "Velg et tilpasset tema for å tilpasse Roblox-opplevelsen din.",
   sr: "Изаберите прилагођену тему да бисте персонализовали своје Roblox искуство.",
   da: "Vælg et brugerdefineret tema for at tilpasse din Roblox-oplevelse.",
   et: "Valige Robloxi kogemuse isikupärastamiseks kohandatud teema.",
-  fil: "Pumili ng custom na tema para i-personalize ang iyong karanasan sa Roblox.",
-  tl: "Pumili ng custom na tema para i-personalize ang iyong karanasan sa Roblox.",
+  fil: "Pumili ng pasadyang tema para i-personalize ang iyong karanasan sa Roblox.",
+  tl: "Pumili ng pasadyang tema para i-personalize ang iyong karanasan sa Roblox.",
   hr: "Odaberite prilagođenu temu kako biste personalizirali svoje Roblox iskustvo.",
   lv: "Atlasiet pielāgotu motīvu, lai personalizētu savu Roblox pieredzi.",
   lt: "Pasirinkite pasirinktinę temą, kad pritaikytumėte savo „Roblox“ patirtį.",
@@ -359,15 +367,15 @@ const DESCRIPTION_TEXTS = {
   uk: "Виберіть власну тему, щоб налаштувати свій досвід у Roblox.",
   cs: "Vyberte si vlastní motiv a přizpůsobte si zážitek z Robloxu.",
   el: "Επιλέξτε ένα προσαρμοσμένο θέμα για να προσαρμόσετε την εμπειρία σας στο Roblox.",
-  bs: "Odaberite prilagođeno temu da biste personalizirali svoje Roblox iskustvo.",
+  bs: "Odaberite prilagođenu temu da biste personalizirali svoje Roblox iskustvo.",
   bg: "Изберете персонализирана тема, за да персонализирате вашето изживяване в Roblox.",
   ru: "Выберите пользовательскую тему, чтобы настроить Roblox по своему вкусу.",
   kk: "Roblox тәжірибеңізді жекелендіру үшін арнайы тақырыпты таңдаңыз.",
   bn: "আপনার Roblox অভিজ্ঞতা ব্যক্তিগতকৃত করতে একটি কাস্টম থিম নির্বাচন করুন।",
-  si: "ඔබගේ Roblox අත්දැකීම පුද්ගලීකරණය කිරීමට අභිරුචි තේමාව තෝරන්න।",
-  my: "သင်၏ Roblox အတွေ့အကြုံကို စိတ်ကြိုက်ပြင်ဆင်ရန် စိတ်ကြိုက်အကြောင်းအရာတစ်ခုကို ရွေးချယ်ပါ။",
+  si: "ඔබගේ Roblox අත්දැකීම පුද්ගලීකරණය කිරීමට අභිරුචි තේමාව තෝරන්න.",
+  my: "သင်၏ Roblox အတွေ့အကြုံကို စိတ်ကြိုက်ပြင်ဆင်ရန် စိတ်ကြိုက် အပြင်အဆင်တစ်ခုကို ရွေးချယ်ပါ။",
   ka: "აირჩიეთ პერსონალური თემა თქვენი Roblox გამოცდილების პერსონალიზაციისთვის.",
-  km: "ជ្រើសរើសប្រធានបទផ្ទាល់ខ្លួនដើម្បីប្ដូរបទពិសោធន៍ Roblox របស់អ្នក។"
+  km: "ជ្រើសរើសស្បែកផ្ទាល់ខ្លួនដើម្បីប្ដូរបទពិសោធន៍ Roblox របស់អ្នក។"
 };
 
 const CUSTOM_TAB_TEXTS = {
@@ -397,8 +405,8 @@ const CUSTOM_TAB_TEXTS = {
   sr: "Прилагођено",
   da: "Brugerdefineret",
   et: "Kohandatud",
-  fil: "Custom",
-  tl: "Custom",
+  fil: "Pasadya",
+  tl: "Pasadya",
   hr: "Prilagođeno",
   lv: "Pielāgots",
   lt: "Pasirinktinis",
@@ -409,13 +417,13 @@ const CUSTOM_TAB_TEXTS = {
   sl: "Po meri",
   sk: "Vlastné",
   fi: "Mukautettu",
-  sv: "Anpassad",
-  uk: "Власний",
+  sv: "Anpassat",
+  uk: "Власна",
   cs: "Vlastní",
   el: "Προσαρμοσμένο",
   bs: "Prilagođeno",
   bg: "Персонализирана",
-  ru: "Свой",
+  ru: "Пользовательская",
   kk: "Арнайы",
   bn: "কাস্টম",
   si: "අභිරුචි",
@@ -498,7 +506,8 @@ const injectCustomStyles = () => {
     button[data-testid="app-theme-card"] .icon-regular-roblox-plus,
     div:has(> .icon-regular-roblox-plus),
     [data-testid="app-theme-upsell"],
-    div:has(> [data-testid="app-theme-upsell"]) {
+    div:has(> [data-testid="app-theme-upsell"]),
+    div:has(> div > [data-testid="app-theme-upsell"]) {
       display: none !important;
     }
     .roblox-custom-picker-overlay {
@@ -519,8 +528,6 @@ const injectCustomStyles = () => {
       margin-bottom: 40px !important;
     }
     .settings-container-v2,
-    .tab-pane,
-    .tab-content,
     #react-user-account-base {
       height: auto !important;
       min-height: min-content !important;
@@ -547,21 +554,25 @@ const getLangCode = () => {
 };
 
 const getAppThemeSection = () => {
-  const card = document.querySelector('button[data-testid="app-theme-card"]');
-  if (card) {
-    const parentSection = card.closest("section");
-    if (parentSection && parentSection.parentElement && parentSection.parentElement.closest("section")) {
-      return parentSection.parentElement.closest("section");
-    }
-    return parentSection;
-  }
-  const tabGroup = document.querySelector('div[role="group"][aria-label="App theme"]');
+  const tabGroup = document.querySelector('div[role="group"][aria-label="App theme"], div[role="group"]');
   if (tabGroup) {
-    const parentSection = tabGroup.closest("section");
-    if (parentSection && parentSection.parentElement && parentSection.parentElement.closest("section")) {
-      return parentSection.parentElement.closest("section");
+    const subSection = tabGroup.closest("section");
+    if (subSection && subSection.parentElement) {
+      const outerSection = subSection.parentElement.closest("section:not(.settings-container-v2)");
+      if (outerSection) return outerSection;
     }
-    return parentSection;
+    if (subSection && !subSection.classList.contains("settings-container-v2")) {
+      return subSection;
+    }
+  }
+  const card = document.querySelector('button[data-testid="app-theme-card"]:not([data-custom-card="true"])');
+  if (card) {
+    const subSection = card.closest("section:not(.settings-container-v2)");
+    if (subSection && subSection.parentElement) {
+      const outerSection = subSection.parentElement.closest("section:not(.settings-container-v2)");
+      if (outerSection) return outerSection;
+    }
+    return subSection;
   }
   return null;
 };
@@ -586,14 +597,12 @@ const getExclusiveGrid = () => {
 
 const updateTitleText = () => {
   const section = getAppThemeSection();
-  const titleEl = section
-    ? section.querySelector("h3, .text-title-large")
-    : null;
+  const titleEl = section ? section.querySelector("h3, .text-title-large") : null;
   if (!titleEl) return;
   const fullCode = getLangCode();
   const baseCode = fullCode.split("_")[0];
   const text = TITLE_TEXTS[fullCode] || TITLE_TEXTS[baseCode] || TITLE_TEXTS.en;
-  if (titleEl.textContent !== text) {
+  if (text && titleEl.textContent !== text) {
     titleEl.textContent = text;
   }
 };
@@ -606,7 +615,7 @@ const updateDescriptionText = () => {
   const fullCode = getLangCode();
   const baseCode = fullCode.split("_")[0];
   const text = DESCRIPTION_TEXTS[fullCode] || DESCRIPTION_TEXTS[baseCode] || DESCRIPTION_TEXTS.en;
-  if (p.textContent !== text) {
+  if (text && p.textContent !== text) {
     p.textContent = text;
   }
 };
@@ -617,7 +626,7 @@ const updateCustomTabText = () => {
   const fullCode = getLangCode();
   const baseCode = fullCode.split("_")[0];
   const text = CUSTOM_TAB_TEXTS[fullCode] || CUSTOM_TAB_TEXTS[baseCode] || CUSTOM_TAB_TEXTS.en;
-  if (tabSpan.textContent !== text) {
+  if (text && tabSpan.textContent !== text) {
     tabSpan.textContent = text;
   }
 };
@@ -635,7 +644,7 @@ const applyEarlyTheme = () => {
 
     const list = document.body.classList;
     Array.from(list).forEach((cls) => {
-      if (cls.endsWith("-theme") && cls !== "light-theme" && cls !== "dark-theme" && cls !== "age-roblox-theme" && cls !== currentTheme) {
+      if (isThemeClass(cls) && cls !== currentTheme) {
         list.remove(cls);
       }
     });
@@ -699,34 +708,34 @@ const getCardThemeClass = (card) => {
 
   const label = (card.querySelector(".content-default, span:last-child")?.textContent || "").trim().toLowerCase();
   if (label === "default") return "";
-  if (label === "classic") return "classic-theme";
-  if (label === "cosmic dust") return "cosmic-dust-theme";
-  if (label === "polar freeze") return "polar-freeze-theme";
-  if (label === "super charge") return "super-charge-theme";
-  if (label === "electric lime") return "electric-lime-theme";
-  if (label === "lava glow") return "lava-glow-theme";
-  if (label === "star burst") return "star-burst-theme";
-  if (label === "pixel pop") return "pixel-pop-theme";
-  if (label === "nebula drift") return "nebula-drift-theme";
-  if (label === "nitro frost") return "nitro-frost-theme";
-  if (label === "circuit rush") return "circuit-rush-theme";
-  if (label === "kinetic energy") return "kinetic-energy-theme";
-  if (label === "inferno blast") return "inferno-blast-theme";
-  if (label === "hyper plum") return "hyper-plum-theme";
-  if (label === "quantum pulse") return "quantum-pulse-theme";
+  if (label === "classic") return "theme-classic";
+  if (label === "cosmic dust") return "theme-cosmic-dust";
+  if (label === "polar freeze") return "theme-polar-freeze";
+  if (label === "super charge") return "theme-super-charge";
+  if (label === "electric lime") return "theme-electric-lime";
+  if (label === "lava glow") return "theme-lava-glow";
+  if (label === "star burst") return "theme-star-burst";
+  if (label === "pixel pop") return "theme-pixel-pop";
+  if (label === "nebula drift") return "theme-nebula-drift";
+  if (label === "nitro frost") return "theme-nitro-frost";
+  if (label === "circuit rush") return "theme-circuit-rush";
+  if (label === "kinetic energy") return "theme-kinetic-energy";
+  if (label === "inferno blast") return "theme-inferno-blast";
+  if (label === "hyper plum") return "theme-hyper-plum";
+  if (label === "quantum pulse") return "theme-quantum-pulse";
 
   const parent = card.parentElement;
   if (parent) {
     const cards = Array.from(parent.querySelectorAll('button[data-testid="app-theme-card"]'));
     const index = cards.indexOf(card);
     if (index >= 0) {
-      if (cards.length === 2) {
-        return index === 0 ? "" : "classic-theme";
-      }
       const section = getAppThemeSection();
       const tabGroup = section ? section.querySelector('div[role="group"]') : null;
       if (tabGroup) {
         const tabs = tabGroup.querySelectorAll('button:not([data-custom-tab="true"])');
+        if (tabs.length >= 3 && tabs[2].getAttribute("aria-pressed") === "true") {
+          return SET3_CLASSES[index] || "";
+        }
         if (tabs.length >= 2 && tabs[1].getAttribute("aria-pressed") === "true") {
           return SET2_CLASSES[index] || "";
         }
@@ -743,7 +752,7 @@ const applyTheme = () => {
   const currentTheme = localStorage.getItem(STORAGE_KEY);
 
   const customClasses = Array.from(document.body.classList).filter(
-    (cls) => cls.endsWith("-theme") && cls !== "light-theme" && cls !== "dark-theme" && cls !== "age-roblox-theme"
+    (cls) => isThemeClass(cls)
   );
 
   if (currentTheme) {
@@ -761,23 +770,14 @@ const applyTheme = () => {
   }
 };
 
-const resetNativeThemeToDefault = () => {
-  const section = getAppThemeSection();
-  if (!section) return;
-  const cards = section.querySelectorAll('button[data-testid="app-theme-card"]:not([data-custom-card="true"])');
-  for (const c of cards) {
-    if (getCardThemeClass(c) === "") {
-      isProgrammaticClick = true;
-      c.click();
-      isProgrammaticClick = false;
-      break;
-    }
-  }
-};
-
 const updateTabStyles = (group) => {
   const activeTab = localStorage.getItem(ACTIVE_TAB_KEY) || "native";
   const tabs = Array.from(group.querySelectorAll("button"));
+  const nativeTabs = tabs.filter((t) => t.getAttribute("data-custom-tab") !== "true");
+  const hasActiveNative = nativeTabs.some((t) => t.getAttribute("aria-pressed") === "true");
+
+  const activeClass = "bg-inverse-surface-0 content-inverse-emphasis relative clip group/interactable focus-visible:outline-focus disabled:outline-none cursor-pointer relative flex justify-center items-center radius-circle stroke-none padding-left-medium padding-right-medium height-800 text-label-medium";
+  const inactiveClass = "bg-shift-300 content-action-utility relative clip group/interactable focus-visible:outline-focus disabled:outline-none cursor-pointer relative flex justify-center items-center radius-circle stroke-none padding-left-medium padding-right-medium height-800 text-label-medium";
 
   tabs.forEach((tab) => {
     const isCustom = tab.getAttribute("data-custom-tab") === "true";
@@ -785,19 +785,23 @@ const updateTabStyles = (group) => {
 
     if (activeTab === "custom") {
       isActive = isCustom;
+      if (!isCustom) {
+        tab.className = inactiveClass;
+        return;
+      }
     } else {
       if (!isCustom) {
-        isActive = tab.getAttribute("aria-pressed") === "true";
+        if (!hasActiveNative && tab === nativeTabs[0]) {
+          isActive = true;
+        } else {
+          isActive = tab.getAttribute("aria-pressed") === "true";
+        }
       } else {
         isActive = false;
       }
     }
 
     tab.setAttribute("aria-pressed", isActive ? "true" : "false");
-
-    const activeClass = "bg-inverse-surface-0 content-inverse-emphasis relative clip group/interactable focus-visible:outline-focus disabled:outline-none cursor-pointer relative flex justify-center items-center radius-circle stroke-none padding-left-medium padding-right-medium height-800 text-label-medium";
-    const inactiveClass = "bg-shift-300 content-action-utility relative clip group/interactable focus-visible:outline-focus disabled:outline-none cursor-pointer relative flex justify-center items-center radius-circle stroke-none padding-left-medium padding-right-medium height-800 text-label-medium";
-
     tab.className = isActive ? activeClass : inactiveClass;
   });
 };
@@ -967,10 +971,46 @@ window.addEventListener("storage", (e) => {
 document.addEventListener("click", (e) => {
   const customTab = e.target.closest('button[data-custom-tab="true"]');
   if (customTab) {
-    resetNativeThemeToDefault();
+    e.preventDefault();
+    e.stopPropagation();
+    e.stopImmediatePropagation();
     populateCustomColorsFromCurrentTheme();
     localStorage.setItem(ACTIVE_TAB_KEY, "custom");
     localStorage.setItem(STORAGE_KEY, "custom-user-theme");
+    init();
+    return;
+  }
+
+  const customCard = e.target.closest('[data-custom-card="true"]');
+  if (customCard) {
+    localStorage.setItem(STORAGE_KEY, "custom-user-theme");
+    applyTheme();
+    const input = customCard.querySelector("input.roblox-custom-picker-overlay");
+    if (input && e.target !== input) {
+      if (typeof input.showPicker === "function") {
+        input.showPicker();
+      } else {
+        input.click();
+      }
+    }
+    return;
+  }
+
+  const card = e.target.closest('button[data-testid="app-theme-card"]:not([data-custom-card="true"])');
+  if (card) {
+    e.preventDefault();
+    e.stopPropagation();
+    e.stopImmediatePropagation();
+
+    const themeClass = getCardThemeClass(card);
+
+    if (themeClass) {
+      localStorage.setItem(STORAGE_KEY, themeClass);
+      localStorage.setItem(STORAGE_LAST_NATIVE_THEME, themeClass);
+    } else {
+      localStorage.removeItem(STORAGE_KEY);
+      localStorage.removeItem(STORAGE_LAST_NATIVE_THEME);
+    }
     init();
     return;
   }
@@ -999,33 +1039,7 @@ document.addEventListener("click", (e) => {
       return;
     }
   }
-
-  const customCard = e.target.closest('[data-custom-card="true"]');
-  if (customCard) {
-    localStorage.setItem(STORAGE_KEY, "custom-user-theme");
-    applyTheme();
-    return;
-  }
-
-  if (isProgrammaticClick) return;
-
-  const card = e.target.closest('button[data-testid="app-theme-card"]:not([data-custom-card="true"])');
-  if (!card) return;
-
-  const themeClass = getCardThemeClass(card);
-
-  if (themeClass) {
-    if (themeClass !== "classic-theme") {
-      resetNativeThemeToDefault();
-    }
-    localStorage.setItem(STORAGE_KEY, themeClass);
-    localStorage.setItem(STORAGE_LAST_NATIVE_THEME, themeClass);
-  } else {
-    localStorage.removeItem(STORAGE_KEY);
-    localStorage.removeItem(STORAGE_LAST_NATIVE_THEME);
-  }
-  init();
-});
+}, true);
 
 document.addEventListener("input", (e) => {
   if (e.target && e.target.classList.contains("roblox-custom-picker-overlay")) {
