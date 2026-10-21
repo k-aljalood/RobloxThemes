@@ -4,6 +4,8 @@ const STORAGE_KEY = "roblox-custom-theme";
 const ACTIVE_TAB_KEY = "roblox-active-theme-tab";
 const STORAGE_CUSTOM_MAP = "roblox-custom-group-colors";
 const STORAGE_LAST_NATIVE_THEME = "roblox-last-native-theme";
+const STORAGE_SAVED_MODE_CLASS = "roblox-saved-mode-class";
+const STORAGE_SAVED_MODE_TITLE = "roblox-saved-mode-title";
 
 let isUpdating = false;
 let isEarlyUpdating = false;
@@ -82,7 +84,8 @@ const SET2_CLASSES = [
 ];
 
 const SET3_CLASSES = [
-  "theme-classic"
+  "theme-classic",
+  "theme-halloween-2026"
 ];
 
 const isThemeClass = (cls) => {
@@ -498,7 +501,9 @@ const updateCustomThemeCSS = () => {
   }
 };
 
-const injectCustomStyles = () => {
+injectCustomStyles();
+
+function injectCustomStyles() {
   if (document.getElementById("roblox-custom-theme-style")) return;
   const style = document.createElement("style");
   style.id = "roblox-custom-theme-style";
@@ -535,9 +540,7 @@ const injectCustomStyles = () => {
     }
   `;
   (document.head || document.documentElement).appendChild(style);
-};
-
-injectCustomStyles();
+}
 
 const getLangCode = () => {
   let code = "";
@@ -652,6 +655,19 @@ const applyEarlyTheme = () => {
     if (currentTheme && !list.contains(currentTheme)) {
       list.add(currentTheme);
     }
+
+    if (currentTheme === "theme-halloween-2026") {
+      if (list.contains("light-theme")) {
+        list.remove("light-theme");
+        list.add("dark-theme");
+      }
+    } else {
+      const savedMode = localStorage.getItem(STORAGE_SAVED_MODE_CLASS);
+      if (savedMode && !list.contains(savedMode)) {
+        list.remove("light-theme", "dark-theme");
+        list.add(savedMode);
+      }
+    }
   } finally {
     isEarlyUpdating = false;
   }
@@ -684,6 +700,10 @@ if (!document.body) {
 }
 
 const getCardThemeClass = (card) => {
+  if (card.querySelector('[class*="e92127"], [class*="0242dc"]')) {
+    return "theme-halloween-2026";
+  }
+
   const colorSpan = card.querySelector("span[style*='background-color']") ||
                     card.querySelector(".radius-circle span") ||
                     card.querySelector(".radius-circle");
@@ -697,7 +717,7 @@ const getCardThemeClass = (card) => {
     if (!bg) {
       bg = colorSpan.getAttribute("style") || "";
     }
-    const match = bg.match(/rgb\(\s*\d+\s*,\s*\d+\s*,\s*\d+\s*\)/i);
+    const match = bg.match(/rgb\(\s*\d+\s*,\s*\d+\s*\)/i);
     if (match) {
       const normalized = match[0].replace(/\s+/g, "").toLowerCase();
       if (normalized in COLOR_MAP) {
@@ -708,6 +728,7 @@ const getCardThemeClass = (card) => {
 
   const label = (card.querySelector(".content-default, span:last-child")?.textContent || "").trim().toLowerCase();
   if (label === "default") return "";
+  if (label === "the hollow" || label.includes("hollow")) return "theme-halloween-2026";
   if (label === "classic") return "theme-classic";
   if (label === "cosmic dust") return "theme-cosmic-dust";
   if (label === "polar freeze") return "theme-polar-freeze";
@@ -726,9 +747,14 @@ const getCardThemeClass = (card) => {
 
   const parent = card.parentElement;
   if (parent) {
+    const exclusiveGrid = getExclusiveGrid();
     const cards = Array.from(parent.querySelectorAll('button[data-testid="app-theme-card"]'));
     const index = cards.indexOf(card);
     if (index >= 0) {
+      if (exclusiveGrid && parent !== exclusiveGrid) {
+        if (index === 0) return "";
+        if (index === 1) return "theme-halloween-2026";
+      }
       const section = getAppThemeSection();
       const tabGroup = section ? section.querySelector('div[role="group"]') : null;
       if (tabGroup) {
@@ -745,6 +771,67 @@ const getCardThemeClass = (card) => {
   }
 
   return "";
+};
+
+const updateModeUI = () => {
+  const modeBtn = document.querySelector('button[role="combobox"][aria-labelledby="app-theme-mode-heading"]');
+  if (!modeBtn) return;
+  const modeContainer = modeBtn.closest(".fill.basis-0") || modeBtn.parentElement;
+  const modeLabel = modeBtn.querySelector(".foundation-web-menu-item-title");
+  const isHollow = (localStorage.getItem(STORAGE_KEY) === "theme-halloween-2026");
+
+  if (isHollow) {
+    if (modeContainer) {
+      modeContainer.classList.add("opacity-[0.5]", "pointer-events-none");
+    }
+    if (!modeBtn.hasAttribute("disabled")) {
+      modeBtn.setAttribute("disabled", "");
+    }
+    if (!modeBtn.hasAttribute("data-disabled")) {
+      modeBtn.setAttribute("data-disabled", "");
+    }
+    if (modeLabel && modeLabel.textContent !== "Dark") {
+      modeLabel.textContent = "Dark";
+    }
+    if (document.body && document.body.classList.contains("light-theme")) {
+      document.body.classList.remove("light-theme");
+      document.body.classList.add("dark-theme");
+    }
+  } else {
+    if (modeContainer) {
+      modeContainer.classList.remove("opacity-[0.5]", "pointer-events-none");
+    }
+    if (modeBtn.hasAttribute("disabled")) {
+      modeBtn.removeAttribute("disabled");
+    }
+    if (modeBtn.hasAttribute("data-disabled")) {
+      modeBtn.removeAttribute("data-disabled");
+    }
+
+    const savedTitle = localStorage.getItem(STORAGE_SAVED_MODE_TITLE);
+    const savedClass = localStorage.getItem(STORAGE_SAVED_MODE_CLASS);
+
+    let targetTitle = savedTitle;
+    if (!targetTitle && savedClass) {
+      targetTitle = savedClass === "light-theme" ? "Light" : "Dark";
+    }
+
+    if (targetTitle && modeLabel && modeLabel.textContent !== targetTitle) {
+      modeLabel.textContent = targetTitle;
+    }
+
+    if (savedClass && document.body && !document.body.classList.contains(savedClass)) {
+      document.body.classList.remove("light-theme", "dark-theme");
+      document.body.classList.add(savedClass);
+    }
+
+    if (savedTitle) {
+      localStorage.removeItem(STORAGE_SAVED_MODE_TITLE);
+    }
+    if (savedClass) {
+      localStorage.removeItem(STORAGE_SAVED_MODE_CLASS);
+    }
+  }
 };
 
 const applyTheme = () => {
@@ -764,6 +851,12 @@ const applyTheme = () => {
     });
     if (!document.body.classList.contains(currentTheme)) {
       document.body.classList.add(currentTheme);
+    }
+    if (currentTheme === "theme-halloween-2026") {
+      if (document.body.classList.contains("light-theme")) {
+        document.body.classList.remove("light-theme");
+        document.body.classList.add("dark-theme");
+      }
     }
   } else {
     customClasses.forEach((cls) => document.body.classList.remove(cls));
@@ -939,6 +1032,7 @@ const init = () => {
 
   try {
     injectCustomStyles();
+    updateModeUI();
     applyTheme();
     setupCustomTabAndGrid();
     updateCardsUI();
@@ -963,7 +1057,7 @@ window.addEventListener("storage", (e) => {
   if (e.key === STORAGE_CUSTOM_MAP) {
     cachedCustomColors = null;
   }
-  if (e.key === STORAGE_KEY || e.key === ACTIVE_TAB_KEY || e.key === STORAGE_CUSTOM_MAP || e.key === STORAGE_LAST_NATIVE_THEME) {
+  if (e.key === STORAGE_KEY || e.key === ACTIVE_TAB_KEY || e.key === STORAGE_CUSTOM_MAP || e.key === STORAGE_LAST_NATIVE_THEME || e.key === STORAGE_SAVED_MODE_CLASS) {
     init();
   }
 });
@@ -1003,6 +1097,25 @@ document.addEventListener("click", (e) => {
     e.stopImmediatePropagation();
 
     const themeClass = getCardThemeClass(card);
+
+    if (themeClass === "theme-halloween-2026") {
+      if (!localStorage.getItem(STORAGE_SAVED_MODE_CLASS)) {
+        const modeLabel = document.querySelector('button[role="combobox"][aria-labelledby="app-theme-mode-heading"] .foundation-web-menu-item-title');
+        const isLight = (document.body && document.body.classList.contains("light-theme")) || (modeLabel && modeLabel.textContent.trim().toLowerCase() === "light");
+        const curMode = isLight ? "light-theme" : "dark-theme";
+        localStorage.setItem(STORAGE_SAVED_MODE_CLASS, curMode);
+        if (modeLabel) {
+          const txt = modeLabel.textContent.trim();
+          if (txt && txt.toLowerCase() !== "dark") {
+            localStorage.setItem(STORAGE_SAVED_MODE_TITLE, txt);
+          } else {
+            localStorage.setItem(STORAGE_SAVED_MODE_TITLE, isLight ? "Light" : "Dark");
+          }
+        } else {
+          localStorage.setItem(STORAGE_SAVED_MODE_TITLE, isLight ? "Light" : "Dark");
+        }
+      }
+    }
 
     if (themeClass) {
       localStorage.setItem(STORAGE_KEY, themeClass);
